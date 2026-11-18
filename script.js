@@ -1,4 +1,5 @@
-// Mini-libreria — Settimana VII Giorno I — Versione con localStorage
+// Mini-libreria — Settimana VII Giorno I
+// Libreria locale con localStorage e ricerca tramite Open Library API
 
 // === Classi ===
 class Libro {
@@ -32,7 +33,7 @@ class LibroDigitale extends Libro {
   }
 }
 
-// === LocalStorage ===
+// === localStorage ===
 const CHIAVE_LIBRI = "mini-libreria-libri";
 
 function caricaLibri() {
@@ -88,68 +89,93 @@ function salvaLibri() {
   }
 }
 
-// === Render ===
+// === Render della libreria personale ===
 function renderLibri() {
-  const html = libri
-    .map(
-      (l) => `
-    <li class="${l.letto ? "letto" : ""}" data-id="${l.id}">
-      <div class="info">
-        <span class="titolo">${l.titolo}</span>
-        <span class="badge-formato">${l.formato()}</span>
-        <div class="meta">${l.autore} — ${l.anno}</div>
-      </div>
-      <div class="azioni">
-        ${
-          l.letto
-            ? "✓ letto"
-            : '<button data-azione="leggi">Segna come letto</button>'
-        }
-        <button data-azione="elimina">Elimina</button>
-      </div>
-    </li>
-  `
-    )
-    .join("");
+  const lista = document.getElementById("lista-libri");
+  lista.replaceChildren();
 
-  document.getElementById("lista-libri").innerHTML = html;
+  libri.forEach((libro) => {
+    const elemento = document.createElement("li");
+    elemento.className = libro.letto ? "letto" : "";
+    elemento.dataset.id = libro.id;
+
+    const info = document.createElement("div");
+    info.className = "info";
+
+    const titolo = document.createElement("span");
+    titolo.className = "titolo";
+    titolo.textContent = libro.titolo;
+
+    const badgeFormato = document.createElement("span");
+    badgeFormato.className = "badge-formato";
+    badgeFormato.textContent = libro.formato();
+
+    const meta = document.createElement("div");
+    meta.className = "meta";
+    meta.textContent = `${libro.autore} — ${libro.anno}`;
+
+    info.append(titolo, badgeFormato, meta);
+
+    const azioni = document.createElement("div");
+    azioni.className = "azioni";
+
+    if (libro.letto) {
+      const statoLetto = document.createElement("span");
+      statoLetto.textContent = "✓ letto";
+      azioni.appendChild(statoLetto);
+    } else {
+      const bottoneLeggi = document.createElement("button");
+      bottoneLeggi.type = "button";
+      bottoneLeggi.dataset.azione = "leggi";
+      bottoneLeggi.textContent = "Segna come letto";
+      azioni.appendChild(bottoneLeggi);
+    }
+
+    const bottoneElimina = document.createElement("button");
+    bottoneElimina.type = "button";
+    bottoneElimina.dataset.azione = "elimina";
+    bottoneElimina.textContent = "Elimina";
+    azioni.appendChild(bottoneElimina);
+
+    elemento.append(info, azioni);
+    lista.appendChild(elemento);
+  });
+
   document.getElementById("contatore").textContent = libri.length;
 }
 
-// === Eventi ===
-
-// Mostra o nasconde il campo "dimensione" in base al formato selezionato
+// === Selezione del formato ===
 document.getElementById("formato").addEventListener("change", (e) => {
-  const campo = document.getElementById("campo-dimensione");
+  const campoDimensione = document.getElementById("campo-dimensione");
 
   if (e.target.value === "digitale") {
-    campo.removeAttribute("hidden");
+    campoDimensione.removeAttribute("hidden");
   } else {
-    campo.setAttribute("hidden", "");
+    campoDimensione.setAttribute("hidden", "");
   }
 });
 
-// Submit del form: crea il libro, lo aggiunge all'array e lo salva
+// === Aggiunta di un libro ===
 document.getElementById("aggiungi-libro").addEventListener("submit", (e) => {
   e.preventDefault();
 
-  const titolo = document.getElementById("titolo").value;
-  const autore = document.getElementById("autore").value;
+  const titolo = document.getElementById("titolo").value.trim();
+  const autore = document.getElementById("autore").value.trim();
   const anno = parseInt(document.getElementById("anno").value, 10);
   const formato = document.getElementById("formato").value;
 
-  let nuovo;
+  let nuovoLibro;
 
   if (formato === "digitale") {
-    const dim =
+    const dimensione =
       parseFloat(document.getElementById("dimensione").value) || 0;
 
-    nuovo = new LibroDigitale(titolo, autore, anno, dim);
+    nuovoLibro = new LibroDigitale(titolo, autore, anno, dimensione);
   } else {
-    nuovo = new Libro(titolo, autore, anno);
+    nuovoLibro = new Libro(titolo, autore, anno);
   }
 
-  libri.push(nuovo);
+  libri.push(nuovoLibro);
   salvaLibri();
   renderLibri();
 
@@ -157,15 +183,15 @@ document.getElementById("aggiungi-libro").addEventListener("submit", (e) => {
   document.getElementById("campo-dimensione").setAttribute("hidden", "");
 });
 
-// Gestisce i pulsanti "Segna come letto" ed "Elimina"
+// === Segna come letto ed elimina un libro ===
 document.getElementById("lista-libri").addEventListener("click", (e) => {
   const bottone = e.target.closest("[data-azione]");
 
   if (!bottone) return;
 
   const azione = bottone.dataset.azione;
-  const card = bottone.closest("li");
-  const id = Number(card.dataset.id);
+  const elemento = bottone.closest("li");
+  const id = Number(elemento.dataset.id);
   const indice = libri.findIndex((libro) => libro.id === id);
 
   if (indice === -1) return;
@@ -180,6 +206,178 @@ document.getElementById("lista-libri").addEventListener("click", (e) => {
 
   salvaLibri();
   renderLibri();
+});
+
+// === Ricerca tramite Open Library API ===
+const formCerca = document.getElementById("cerca-libri");
+const termineRicerca = document.getElementById("termine-ricerca");
+const statoRicerca = document.getElementById("stato-ricerca");
+const risultatiRicerca = document.getElementById("risultati-ricerca");
+
+let numeroRicercaCorrente = 0;
+termineRicerca.addEventListener("input", () => {
+  // Invalida eventuali ricerche ancora in corso
+  numeroRicercaCorrente++;
+
+  // Cancella i risultati e il messaggio precedenti
+  risultatiRicerca.replaceChildren();
+  statoRicerca.textContent = "";
+});
+
+// Invio avvia la ricerca; Shift+Invio inserisce una nuova riga
+termineRicerca.addEventListener("keydown", (e) => {
+  if (e.key === "Enter" && !e.shiftKey && !e.isComposing) {
+    e.preventDefault();
+    formCerca.requestSubmit();
+  }
+});
+
+async function cercaLibriOpenLibrary(campo, termine) {
+  const url = new URL("https://openlibrary.org/search.json");
+
+  url.searchParams.set(campo, termine);
+  url.searchParams.set(
+    "fields",
+    "key,title,author_name,first_publish_year"
+  );
+  url.searchParams.set("limit", "20");
+
+  const risposta = await fetch(url);
+  const dati = await risposta.json();
+
+  if (!risposta.ok) {
+    throw new Error("Errore durante la ricerca dei libri.");
+  }
+
+  return dati.docs || [];
+}
+
+const libriOpenLibrary = new Map();
+
+function mostraRisultatiRicerca(libriTrovati) {
+  risultatiRicerca.replaceChildren();
+  libriOpenLibrary.clear();
+
+  libriTrovati.forEach((libro) => {
+    const info = document.createElement("div");
+    info.className = "info";
+
+    const titolo = document.createElement("span");
+    titolo.className = "titolo";
+    titolo.textContent = libro.title || "Titolo non disponibile";
+
+    const meta = document.createElement("div");
+    meta.className = "meta";
+    meta.textContent =
+      libro.author_name?.join(", ") || "Autore non disponibile";
+
+    if (libro.first_publish_year) {
+      meta.textContent += ` — ${libro.first_publish_year}`;
+    }
+
+    info.append(titolo, meta);
+
+    const azioni = document.createElement("div");
+    azioni.className = "azioni";
+
+    const bottoneAggiungi = document.createElement("button");
+    bottoneAggiungi.type = "button";
+    bottoneAggiungi.dataset.azione = "aggiungi-api";
+    bottoneAggiungi.dataset.chiave = libro.key;
+    bottoneAggiungi.textContent = "Aggiungi";
+
+    libriOpenLibrary.set(libro.key, libro);
+
+    azioni.appendChild(bottoneAggiungi);
+
+    const elemento = document.createElement("li");
+    elemento.append(info, azioni);
+    risultatiRicerca.appendChild(elemento);
+  });
+}
+
+risultatiRicerca.addEventListener("click", (e) => {
+  const bottone = e.target.closest('[data-azione="aggiungi-api"]');
+
+  if (!bottone) return;
+
+  const libroApi = libriOpenLibrary.get(bottone.dataset.chiave);
+
+  if (!libroApi) return;
+
+  const titolo = libroApi.title || "Titolo non disponibile";
+  const autore =
+    libroApi.author_name?.join(", ") || "Autore non disponibile";
+  const anno = Number(libroApi.first_publish_year) || "Anno non disponibile";
+
+  // Lo aggiunge alla libreria come libro cartaceo
+  const nuovoLibro = new Libro(titolo, autore, anno);
+  libri.push(nuovoLibro);
+
+  salvaLibri();
+  renderLibri();
+
+  bottone.textContent = "Aggiunto";
+  bottone.disabled = true;
+});
+
+formCerca.addEventListener("submit", async (e) => {
+  e.preventDefault();
+
+  const termine = termineRicerca.value.trim();
+  if (!termine) return;
+
+  const numeroRichiesta = ++numeroRicercaCorrente;
+
+  statoRicerca.textContent = "Ricerca in corso…";
+  risultatiRicerca.replaceChildren();
+
+  try {
+    const [risultatiTitolo, risultatiAutore] = await Promise.all([
+      cercaLibriOpenLibrary("title", termine),
+      cercaLibriOpenLibrary("author", termine),
+    ]);
+
+    // Unisce i risultati e rimuove i duplicati
+    const libriUnici = [
+      ...new Map(
+        [...risultatiTitolo, ...risultatiAutore].map((libro) => [
+          libro.key,
+          libro,
+        ])
+      ).values(),
+    ];
+
+    const termineNormalizzato = termine.toLocaleLowerCase("it");
+
+    // Mostra i libri che contengono il termine nel titolo o nell'autore
+    const libriFiltrati = libriUnici.filter((libro) => {
+      const titolo = (libro.title || "").toLocaleLowerCase("it");
+      const autori = (libro.author_name || []).map((autore) =>
+        autore.toLocaleLowerCase("it")
+      );
+
+      return (
+        titolo.includes(termineNormalizzato) ||
+        autori.some((autore) => autore.includes(termineNormalizzato))
+      );
+    });
+
+    // Ignora le risposte appartenenti a ricerche precedenti
+    if (numeroRichiesta !== numeroRicercaCorrente) return;
+
+    mostraRisultatiRicerca(libriFiltrati);
+
+    statoRicerca.textContent = libriFiltrati.length
+      ? `Risultati trovati: ${libriFiltrati.length}`
+      : "Nessun libro trovato.";
+  } catch (errore) {
+    if (numeroRichiesta !== numeroRicercaCorrente) return;
+
+    console.error(errore);
+    statoRicerca.textContent =
+      "Non è stato possibile completare la ricerca. Riprova.";
+  }
 });
 
 // === Render iniziale ===
