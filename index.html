@@ -1,37 +1,58 @@
 <!DOCTYPE html>
 <html lang="it">
   <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Mini-libreria — Settimana VII Giorno I</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css" />
   </head>
-  <body>
 
+  <body>
     <header class="site-header">
       <h1>La mia libreria</h1>
       <p>Aggiungi i tuoi libri e segnali come letti.</p>
     </header>
 
     <main class="container">
+      <section class="form-section">
+        <h2>Cerca</h2>
+
+        <form id="cerca-libri" class="form">
+          <div class="campo">
+            <label for="termine-ricerca">Titolo o autore</label>
+            <textarea
+              id="termine-ricerca"
+              name="termine"
+              rows="2"
+              placeholder="Scrivi una parola e premi Invio"
+              required
+            ></textarea>
+          </div>
+
+          <button type="submit" class="btn-primary">Cerca</button>
+        </form>
+
+        <p id="stato-ricerca" aria-live="polite"></p>
+        <ul id="risultati-ricerca" class="lista-libri"></ul>
+      </section>
 
       <section class="form-section">
         <h2>Aggiungi un libro</h2>
-        <form id="aggiungi-libro" class="form">
 
+        <form id="aggiungi-libro" class="form">
           <div class="campo">
             <label for="titolo">Titolo</label>
-            <input type="text" id="titolo" name="titolo" required>
+            <input type="text" id="titolo" name="titolo" required />
           </div>
 
           <div class="campo">
             <label for="autore">Autore</label>
-            <input type="text" id="autore" name="autore" required>
+            <input type="text" id="autore" name="autore" required />
           </div>
 
           <div class="campo">
             <label for="anno">Anno</label>
-            <input type="number" id="anno" name="anno" required>
+            <input type="number" id="anno" name="anno" required />
           </div>
 
           <div class="campo">
@@ -44,7 +65,12 @@
 
           <div class="campo campo-condizionale" id="campo-dimensione" hidden>
             <label for="dimensione">Dimensione (MB)</label>
-            <input type="number" id="dimensione" name="dimensione" step="0.1">
+            <input
+              type="number"
+              id="dimensione"
+              name="dimensione"
+              step="0.1"
+            />
           </div>
 
           <button type="submit" class="btn-primary">Aggiungi</button>
@@ -53,11 +79,8 @@
 
       <section class="lista-section">
         <h2>I tuoi libri (<span id="contatore">0</span>)</h2>
-        <ul id="lista-libri" class="lista-libri">
-          <!-- popolato da JavaScript -->
-        </ul>
+        <ul id="lista-libri" class="lista-libri"></ul>
       </section>
-
     </main>
 
     <script src="script.js"></script>
