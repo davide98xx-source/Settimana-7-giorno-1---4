@@ -1,7 +1,8 @@
 /* Mini-libreria — Settimana VII Giorno I */
 
-
-* { box-sizing: border-box; }
+* {
+  box-sizing: border-box;
+}
 
 body {
   margin: 0;
@@ -25,12 +26,16 @@ body {
   text-align: center;
 }
 
-.site-header h1 { margin: 0 0 8px; }
-.site-header p  { margin: 0; opacity: 0.85; }
+.site-header h1 {
+  margin: 0 0 8px;
+}
 
+.site-header p {
+  margin: 0;
+  opacity: 0.85;
+}
 
-/* === Form === */
-
+/* Form */
 .form-section {
   background: white;
   padding: 24px;
@@ -39,7 +44,9 @@ body {
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
 }
 
-.form-section h2 { margin-top: 0; }
+.form-section h2 {
+  margin-top: 0;
+}
 
 .form .campo {
   margin-bottom: 12px;
@@ -52,13 +59,19 @@ body {
 }
 
 .form input,
-.form select {
+.form select,
+.form textarea {
   width: 100%;
   padding: 8px;
   font-size: 1rem;
+  font-family: inherit;
   border: 1px solid #ccc;
   border-radius: 4px;
   background: white;
+}
+
+.form textarea {
+  resize: vertical;
 }
 
 .btn-primary {
@@ -76,9 +89,7 @@ body {
   background: hsl(220, 50%, 18%);
 }
 
-
-/* === Lista libri === */
-
+/* Liste dei libri */
 .lista-section {
   margin-top: 28px;
 }
@@ -99,6 +110,7 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 12px;
 }
 
 .lista-libri li.letto {
@@ -130,6 +142,13 @@ body {
   vertical-align: middle;
 }
 
+.lista-libri .azioni {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
 .lista-libri .azioni button {
   background: none;
   border: 1px solid #ccc;
@@ -142,4 +161,22 @@ body {
 .lista-libri .azioni button:hover {
   background: hsl(140, 50%, 95%);
   border-color: hsl(140, 50%, 35%);
+}
+
+.risultato-link {
+  color: hsl(220, 50%, 25%);
+  font-weight: bold;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.risultato-link:hover {
+  text-decoration: underline;
+}
+
+@media (max-width: 480px) {
+  .lista-libri li {
+    align-items: flex-start;
+    flex-direction: column;
+  }
 }
